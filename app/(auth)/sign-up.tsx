@@ -5,9 +5,9 @@ import { images } from "@/constants";
 import { Link, router , useRouter} from "expo-router";
 import { useState } from "react";
 import { SafeAreaView, ScrollView, Text,View,Image } from "react-native";
-import { useSignUp } from '@clerk/clerk-expo'
+import { useSignUp, } from '@clerk/clerk-expo'
 import ReactNativeModal from "react-native-modal";
-
+import { addUser } from "../../lib/firebasefunctions";
 
 const SignIn=() =>{
     const { isLoaded, signUp, setActive } = useSignUp()
@@ -19,20 +19,21 @@ const SignIn=() =>{
         password: "",
         
     })
-    //
-  
-    //
+    
     const onSignUpPress = async () => {
         if (!isLoaded) {
           return
         }
     
         try {
-          await signUp.create({
-            username:form.username,
-            emailAddress:form.email,
-            password:form.password,
-          })
+          if(form.email!='' || form.password!=''){
+            await signUp.create({
+              username:form.username,
+              emailAddress:form.email,
+              password:form.password,
+            })}else{
+              alert("Please fill blanks correctly")
+            }
     
           await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
     
@@ -64,7 +65,10 @@ const SignIn=() =>{
           if (completeSignUp.status === 'complete') {
             await setActive({ session: completeSignUp.createdSessionId })
             setVerification({...verification, state:"success"})
-            router.replace('/')
+            
+            addUser(form.username,form.email,form.password)
+
+            router.replace("/(tabs)/home")
           } else {
             console.error(JSON.stringify(completeSignUp, null, 2))
             setVerification({...verification, error:"Verification Failed",state:"failed"})
